@@ -9,22 +9,26 @@ import argparse
 from bs4 import BeautifulSoup
 import os
 import re
-import urllib.request
+import requests
 
+
+userAgent = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/43.4"}
 
 # Connects and fetches the instargram user profile
 def connect ( username ) :
-    try:
-        contents = urllib.request.urlopen("https://www.instagram.com/"+username)    
-    except:                             # throws an exception if username doesn't exits or connection error occurs
+    
+    contents = requests.get("https://www.instagram.com/"+username, headers=userAgent)
+
+    if contents.status_code != 200:                             # throws an exception if username doesn't exits or connection error occurs
         print("Connection error or Username not found!")
+        
         exit()
     
-    return contents.read()
+    return contents.text.encode()
 
 
 # Fetches the arguments passed in the shell
-def parse_args () :
+def parseArguments () :
 
     parser = argparse.ArgumentParser(description="Instagram OSINT tool")
     parser.add_argument ( "-u", "--username", help = "profile username", required=True, nargs=1 )
@@ -36,7 +40,7 @@ def parse_args () :
 
 
 #Fetches details from the profile and returns a dictionary with the details
-def getdetails(html,user):
+def getDetails(html,user):
 
     dict = { 'Username' : user , 'URL' : "https://www.instagram.com/" + user + '/'}
 
@@ -53,12 +57,17 @@ def getdetails(html,user):
     details = str(html( 'script', type="text/javascript" )[3].contents)
 
     dict['Website'] = details.split( """external_url":""" )[1].split(",\"")[0].lstrip('\"').rstrip('\"')
-    if dict['Website'] == 'null' : dict['Website'] = False
+    if dict['Website'] == 'null' : 
+        dict['Website'] = False
+
     dict['Is-Business'] = True if details.split("""is_business_account":""")[1].split("\",")[0] == 'true' else False
     if dict['Is-Business'] == True : 
         dict['Business-Type'] = details.split( """business_category_name":""" )[1].split(",\"")[0].lstrip('\"').rstrip('\"')
+
     dict['Is-Private'] = True if details.split( """is_private":""" )[1].split("\",")[0] == 'true' else False
+
     dict['Recently-Joined'] = True if details.split( """is_joined_recently":""" )[1].split("\",")[0]=='true' else False
+    
     dict['Is-Verified'] = True if details.split( """is_verified":""" )[1].split("\",")[0] == 'true' else False
 
     dict['Description'] = details.split( """biography":\"""" )[1].split("\",")[0].replace("\\\\n",'\n')
@@ -70,59 +79,56 @@ def getdetails(html,user):
     return dict
     
 # To print details
-def print_details ( details ):
+def printDetails ( details ):
     for things in details.keys():                  # Prints values in Dictionary ( There for debugging rn )
         print(things+':\t',details[things])
         
 # To save details
-def save_details ( details, name ):
+def saveDetails ( details, name ):
     with open( name + '.txt', 'w' ) as file:
         for things in details.keys():                  # Prints values in Dictionary ( There for debugging rn )
             file.write(things+':\t'+str(details[things])+'\n')
 
 
 # To download an image from a URL
-def dw_img ( url , name ):
-    urllib.request.urlretrieve( url, name + '.jpg' )
+def downloadImage ( url , name ):
+    r = requests.get(url, headers=userAgent)
+    if r.status_code == 200:
+        with open(name + '.jpg', 'wb') as f:
+            for chunk in r:
+                f.write(chunk)
 
 # To download images fromm public profile
-def dw_data ( code, name, site ):
-    if not os.path.exists( name ):
-        os.makedirs( name )
+def downloadData ( code, name, site ):
     links = re.findall( '"((http)s?://.*?)"', code )
     i = 1
     n = 3 if site == False else 4
     for url in links:
         if i > n:
-            dw_img( url[0].replace( '\\\\u0026','&' ) , name + '\\' + name + '-' + str(i-n))
+            downloadImage( url[0].replace( '\\\\u0026','&' ) , "./download/" + name + '/' + name + '-' + str(i-n))
         i=i+1
 
 
 
 def main():
-    args = parse_args()             # fetches the arguments from shell
+    args = parseArguments()             # fetches the arguments from shell
     username = args.username[0]     # fetches username
 
 
     html = BeautifulSoup( connect( username ), 'html.parser' )      # parses the html document returned
-    details = getdetails(html,username)       # fetches details from the username and html document
+    details = getDetails(html,username)       # fetches details from the username and html document
 
-    try:
-        file = args.file[0]
-        if file == 'y' or file == 'Y' :
-            save_details( details, username )
-        else :   print_details( details )
-
-    except:
-        print_details( details )
+    if args.file:
+        saveDetails( details, username )
+    else:
+        printDetails( details )
     
-    try:
-        dw = args.download[0]
-        if dw == 'y' or dw == 'Y' : 
-            dw_data( str(html( 'script', type="text/javascript" )[3].contents ), username, details['Website'] )
-            dw_img( details[ 'DP-URL' ], details[ 'Username' ] + '\\' + details[ 'Username' ])
-    except : pass
-
+    if args.download:
+        if not os.path.exists( "download/" + details[ 'Username' ] ):
+            os.mkdir("download/" + details[ 'Username' ])
+        downloadImage( details[ 'DP-URL' ], "./download/" + details[ 'Username' ] + '/' + details[ 'Username' ])
+        downloadData( str(html( 'script', type="text/javascript" )[3].contents ), username, details['Website'] )
+        
 
 if __name__ == "__main__":
     main()
