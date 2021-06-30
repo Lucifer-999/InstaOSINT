@@ -2,7 +2,7 @@
 # InstaOSINT Tool                                                #
 # Fetches details from an Instagram Username                     #
 # Can also downloadd all images if account is public             #
-# Coded By: LuC1F3R & Inv0k3r                                    #
+# Coded By: Mystog3n & Inv0k3r                                   #
 ##################################################################
 
 import argparse
