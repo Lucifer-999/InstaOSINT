@@ -85,9 +85,9 @@ def printDetails ( details ):
         
 # To save details
 def saveDetails ( details, name ):
-    with open( name + '.txt', 'w' ) as file:
+    with open( "./download/" + name + '/info.txt', 'w' ) as f:
         for things in details.keys():                  # Prints values in Dictionary ( There for debugging rn )
-            file.write(things+':\t'+str(details[things])+'\n')
+            f.write(things+':\t'+str(details[things])+'\n')
 
 
 # To download an image from a URL
