@@ -5,12 +5,11 @@
 # Coded By: LuC1F3R & Inv0k3r                                    #
 ##################################################################
 
-
-import urllib.request
-from bs4 import BeautifulSoup
 import argparse
-import re
+from bs4 import BeautifulSoup
 import os
+import re
+import urllib.request
 
 
 # Connects and fetches the instargram user profile
@@ -98,26 +97,32 @@ def dw_data ( code, name, site ):
             dw_img( url[0].replace( '\\\\u0026','&' ) , name + '\\' + name + '-' + str(i-n))
         i=i+1
 
-args = parse_args()             # fetches the arguments from shell
-username = args.username[0]     # fetches username
 
 
-html = BeautifulSoup( connect( username ), 'html.parser' )      # parses the html document returned
-details = getdetails(html,username)       # fetches details from the username and html document
+def main():
+    args = parse_args()             # fetches the arguments from shell
+    username = args.username[0]     # fetches username
 
-try:
-    file = args.file[0]
-    if file == 'y' or file == 'Y' :
-        save_details( details, username )
-    else :   print_details( details )
 
-except:
-   print_details( details )
- 
+    html = BeautifulSoup( connect( username ), 'html.parser' )      # parses the html document returned
+    details = getdetails(html,username)       # fetches details from the username and html document
 
-try:
-    dw = args.download[0]
-    if dw == 'y' or dw == 'Y' : 
-        dw_data( str(html( 'script', type="text/javascript" )[3].contents ), username, details['Website'] )
-        dw_img( details[ 'DP-URL' ], details[ 'Username' ] + '\\' + details[ 'Username' ])
-except : pass
+    try:
+        file = args.file[0]
+        if file == 'y' or file == 'Y' :
+            save_details( details, username )
+        else :   print_details( details )
+
+    except:
+        print_details( details )
+    
+    try:
+        dw = args.download[0]
+        if dw == 'y' or dw == 'Y' : 
+            dw_data( str(html( 'script', type="text/javascript" )[3].contents ), username, details['Website'] )
+            dw_img( details[ 'DP-URL' ], details[ 'Username' ] + '\\' + details[ 'Username' ])
+    except : pass
+
+
+if __name__ == "__main__":
+    main()
