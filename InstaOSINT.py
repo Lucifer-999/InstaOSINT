@@ -119,6 +119,8 @@ def main():
     details = getDetails(html,username)       # fetches details from the username and html document
 
     if args.file:
+        if not os.path.exists( "download/" + details[ 'Username' ] ):
+            os.mkdir("download/" + details[ 'Username' ])
         saveDetails( details, username )
     else:
         printDetails( details )
