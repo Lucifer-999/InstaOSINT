@@ -28,9 +28,9 @@ def connect ( username ) :
 def parse_args () :
 
     parser = argparse.ArgumentParser(description="Instagram OSINT tool")
-    parser.add_argument ( "--username", help = "profile username", required=True, nargs=1 )
-    parser.add_argument ( "--download" , help = "Downloads the users photos if their account is public (Y/N)", required=False )
-    parser.add_argument ( "--file" , help = "Save the details in a file (Y/N)", required=False )
+    parser.add_argument ( "-u", "--username", help = "profile username", required=True, nargs=1 )
+    parser.add_argument ( "-d", "--download" , help = "Downloads the users photos if their account is public", action="store_true", required=False )
+    parser.add_argument ( "-f", "--file" , help = "Save the details in a file", action="store_true", required=False )
     
 
     return parser.parse_args()
